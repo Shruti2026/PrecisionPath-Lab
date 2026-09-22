@@ -1,5 +1,6 @@
 package com.precisionpath.user_service.config;
 
+import com.precisionpath.user_service.security.JsonErrorHandlers;
 import com.precisionpath.user_service.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -36,10 +37,19 @@ public class SecurityConfig {
                         )
                 )
 
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(JsonErrorHandlers.unauthorized())
+                        .accessDeniedHandler(JsonErrorHandlers.forbidden())
+                )
+
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers(
-                                "/api/auth/**"
+                                "/api/auth/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/error"
                         ).permitAll()
 
                         .requestMatchers(
@@ -47,8 +57,8 @@ public class SecurityConfig {
                         ).hasRole("ADMIN")
 
                         .requestMatchers(
-                                "/api/patient/**"
-                        ).hasRole("PATIENT")
+                                "/api/users/**"
+                        ).authenticated()
 
                         .anyRequest().authenticated()
                 )

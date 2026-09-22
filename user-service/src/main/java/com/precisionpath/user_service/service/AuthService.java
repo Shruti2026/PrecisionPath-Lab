@@ -6,6 +6,8 @@ import com.precisionpath.user_service.dto.RegisterRequest;
 import com.precisionpath.user_service.dto.RegisterResponse;
 import com.precisionpath.user_service.entity.Role;
 import com.precisionpath.user_service.entity.User;
+import com.precisionpath.user_service.exception.DuplicateResourceException;
+import com.precisionpath.user_service.exception.InvalidCredentialsException;
 import com.precisionpath.user_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,13 +23,15 @@ public class AuthService {
 
     public RegisterResponse register(RegisterRequest request) {
 
-        if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email is already registered");
+        String email = normalizeEmail(request.email());
+
+        if (userRepository.existsByEmail(email)) {
+            throw new DuplicateResourceException("Email is already registered");
         }
 
         User user = User.builder()
-                .fullName(request.fullName())
-                .email(request.email().toLowerCase().trim())
+                .fullName(request.fullName().trim())
+                .email(email)
                 .password(passwordEncoder.encode(request.password()))
                 .phoneNumber(request.phoneNumber())
                 .gender(request.gender())
@@ -45,19 +49,20 @@ public class AuthService {
                 "Registration successful"
         );
     }
+
     public LoginResponse login(LoginRequest request) {
 
         User user = userRepository
-                .findByEmail(request.email().toLowerCase().trim())
+                .findByEmail(normalizeEmail(request.email()))
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Invalid email or password")
+                        new InvalidCredentialsException("Invalid email or password")
                 );
 
         if (!passwordEncoder.matches(
                 request.password(),
                 user.getPassword()
         )) {
-            throw new IllegalArgumentException(
+            throw new InvalidCredentialsException(
                     "Invalid email or password"
             );
         }
@@ -76,5 +81,9 @@ public class AuthService {
                 user.getRole(),
                 "Login successful"
         );
+    }
+
+    static String normalizeEmail(String email) {
+        return email.toLowerCase().trim();
     }
 }
