@@ -1,0 +1,43 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: lab-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/precisionpath_lab?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    username: root
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+# Must be the same secret the user-service signs tokens with
+jwt:
+  secret: ${JWT_SECRET}
+
+app:
+  storage:
+    location: ${LAB_STORAGE_LOCATION:./uploads}
+  # Shared key other services (queue-service) send as X-Internal-Api-Key
+  internal-api-key: ${INTERNAL_API_KEY:}
+  booking:
+    min-reason-words: 50
+    max-days-in-advance: 90
+
+services:
+  user-service:
+    url: ${USER_SERVICE_URL:http://localhost:8081}
